@@ -1,4 +1,4 @@
-# Dynamic scraping: Selenium is used to automate web browser interaction (logging in) and Beautiful Soup used to scrape grades https://medium.com/ymedialabs-innovation/web-scraping-using-beautiful-soup-and-selenium-for-dynamic-page-2f8ad15efe25
+# Dynamic scraping: Selenium is used to automate web browser interaction (logging in) and Beautiful Soup is used to scrape grades https://medium.com/ymedialabs-innovation/web-scraping-using-beautiful-soup-and-selenium-for-dynamic-page-2f8ad15efe25
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -6,14 +6,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+import re
+from tabulate import tabulate
 
 s=Service('/Users/callyli/Documents/chromedriver') #path of chromedriver on OS. chromeDriver is a separate executable that Selenium WebDriver uses to control Chrome; https://stackoverflow.com/questions/64717302/deprecationwarning-executable-path-has-been-deprecated-selenium-python
 driver = webdriver.Chrome(service=s)  #define an object for using webdriver function with the chrome webdriver located at inserted path
 
 wait = WebDriverWait(driver,20) #initialize object for using WebDriverWait class with 2 arguments: driver object and max timeout in seconds
-#driver.implicitly_wait(30) #applies second wait time before finding any element(s). Applies to all objects within script. need this to accommodate dwell time between page loading and privacy agreement to pop-up, user input etc.. https://stackoverflow.com/questions/64032271/handling-accept-cookies-popup-with-selenium-in-python
-username = '*********' 
-password = '*********' 
+username = '***************' 
+password = '***************'
 url = 'https://learn.senecacollege.ca/?new_loc=%2Fultra%2Finstitution-page'
 
 #Navigate to School URL
@@ -21,7 +22,7 @@ driver.get(url)     #navigate to school URL #.get() method will wait for page to
 driver.maximize_window() # maximize the browser window
 
 #Accept privacy agreement
-wait.until(EC.element_to_be_clickable((By.ID,'agree_button'))) #wait until agree button is visible+clickable # can also combine lines 19/20 --> wait.until(EC.element_to_be_clickable((By.ID,'agree_button'))).click()
+wait.until(EC.element_to_be_clickable((By.ID,'agree_button'))) #wait until agree button is visible+clickable # can also combine --> wait.until(EC.element_to_be_clickable((By.ID,'agree_button'))).click()
     #note: element_to_be_clickable() accepts 1 argument (locator) that is a tuple of (by,path)
 driver.find_element(By.ID,'agree_button').click() #click on agree button 
 
@@ -71,51 +72,53 @@ driver.find_element(By.XPATH,'/html/body/div[2]/div[3]/nav/div/div[2]/div/div[2]
 html = driver.page_source #page_source attribute is used to store the source HTML of 'My Grades' page. This is to be loaded into BS
 
 #Pass source HTML into bs4. create bs4 object of parsed html
-soup = BeautifulSoup(html, 'lxml') #html.parser and html5lib are also available 
+soup = BeautifulSoup(html, 'html.parser') #lxml and html5lib are also available 
 
+APS_dict={} #define empty dictionary to house all APS grades
+course_grade=0
+def add_to_dict(dict_key, grade, weight_grade):   #define function to add grade and weighted grade to dictionary
+    APS_dict[dict_key]= [round(grade,2), round(weight_grade,2)]
 
+def calc_weight_grade(grade,weight):       #define function to calculate weighted grade
+    weighted_grade=(grade/100)*weight
+    return weighted_grade
 
 #Calculate grades for workshops. Loop through each workshop cell and caluclate grade
-text_list = soup.find_all(text=re.compile(r'Workshops'))    # define a list of all instances of 'Workshop' text in the HMTL source. re.compile(regular expressions) used to search for the exact specific pattern we want (avoids a return of 'None' due to whitespaces and other characters that could be in the string). compile method allows us to separate out our pattern into a variable. Can't use string in place of text here because .parent attribute doesn't work on string
+text_list = soup.find_all(text=re.compile('Workshops'))    # define a list of all instances of 'Workshop' text found in the HMTL source. re.compile(regular expressions) used to search for the exact specific pattern we want (avoid whitespaces that are a part of the tag strings)
 ws_text_list= text_list[1:6] #define a list with only elements of index 1-5 (workshop 1 to workshop 5)
 ws_numb=1
-for text in reversed(ws_text_list):   # need to reverse list because source HTML stored by Selenium is reversed 
-    text_parent= text.parent #define the parent tag of the list element
-    text_parent_parent=text_parent.parent #define parent of above parent
-    cell_parent= text_parent_parent.parent #define parent of above parent
-    grade_div= cell_parent.find('div', class_='cell grade')# within cell parent, find div with class=cellgrade
-    grade_span= grade_div.find('span', class_='grade') # within above div tag (class=cellgrade), find span tag with class=grade
-    grade=grade_span.string #since above span tag only has one child (the value of the grade as a navigable string), we can use .string attribute
-    max_grade_span= grade_div.find('span', class_='pointsPossible clearfloats') #find span tag containing the max grade possible for this assignment
-    max_grade_out_of = max_grade_span.string #Note: the string within the span tag has an unwanted fowardslash in front of the value (e.g., '/10')
-    max_grade = max_grade_out_of.strip('/') # remove the '/' from above string. Note: .strip attribute only removes leading and traililng characters
-    print(grade) 
-    print(max_grade) 
-    calculated_grade= float(grade)/float(max_grade) * 100 #cast string values to float
-    #calculated_grade_rounded=round(calculated_grade, 2) #round to two decimal places
-    print(f'Workshop {ws_numb} grade (%): {calculated_grade:.2f}') #display grade rounded to two decimal places 
+for ws_text in reversed(ws_text_list):   # need to reverse list because source HTML stored by Selenium is reversed 
+    ws_cell_parent= ws_text.parent.parent.parent #navigate to the parent tag of the text iterable, then to their parent, then to their parent
+    ws_grade_div= ws_cell_parent.find('div', class_='cell grade')# within cell parent, find div with class=cellgrade
+    ws_grade_span= ws_grade_div.find('span', class_='grade') # within above div tag (class=cellgrade), find span tag with class=grade
+    ws_grade=ws_grade_span.string #since above span tag only has one child (the value of the grade as a navigable string), we can use .string attribute
+    ws_max_grade_span= ws_grade_div.find('span', class_='pointsPossible clearfloats') #find span tag containing the max grade possible for this assignment
+    ws_max_grade_out_of = ws_max_grade_span.string #Note: the string within the span tag has an unwanted fowardslash in front of the value (e.g., '/10')
+    ws_max_grade = ws_max_grade_out_of.strip('/') # remove the '/' from above string. Note: .strip attribute only removes leading and traililng characters
+    ws_calculated_grade= float(ws_grade)/float(ws_max_grade) * 100 #cast string values to float and calculate grade as percentage
+    ws_key = f'WS{ws_numb}'
+    ws_weighted_grade=calc_weight_grade(ws_calculated_grade, 4.4)
+    add_to_dict(ws_key,ws_calculated_grade, ws_weighted_grade)
+    course_grade+=ws_weighted_grade
     ws_numb+=1
 
-
 #Calculate grade for quizzes
-qzall_text_list = soup.find_all(text=re.compile(r'Quizzes'))    
+qzall_text_list = soup.find_all(text=re.compile('Quizzes'))    
 qz_text_list= qzall_text_list[1:] #define a list with only elements of index 1 to the end (quiz 1 to...)
-print(qz_text_list)
 qz_numb=1
 for qz_text in reversed(qz_text_list):
-    qz_text_parent= qz_text.parent 
-    qz_text_parent_parent=qz_text_parent.parent 
-    qz_cell_parent= qz_text_parent_parent.parent 
+    qz_cell_parent= qz_text.parent.parent.parent 
     qz_grade_div= qz_cell_parent.find('div', class_='cell grade')
     qz_grade_span= qz_grade_div.find('span', class_='grade')
     qz_grade=qz_grade_span.string 
     qz_max_grade_span= qz_grade_div.find('span', class_='pointsPossible clearfloats')
     qz_max_grade_out_of = qz_max_grade_span.string
     qz_max_grade = qz_max_grade_out_of.strip('/')
-    print(qz_grade) 
-    print(qz_max_grade) 
     qz_calculated_grade= float(qz_grade)/float(qz_max_grade) * 100 
-    print(f'Quiz {qz_numb} grade (%): {qz_calculated_grade:.2f}') 
+    qz_key = f'Quiz {qz_numb}'
+    qz_weighted_grade=calc_weight_grade(qz_calculated_grade, 10.0)
+    add_to_dict(qz_key,qz_calculated_grade, qz_weighted_grade)
+    course_grade+=qz_weighted_grade
     qz_numb+=1
 
 #Calculate grade for presentation (only 1 presentation)
@@ -126,11 +129,23 @@ pres_grade = pres_span.string
 pres_max_grade_span= pres_div.find('span', class_='pointsPossible clearfloats') 
 pres_max_grade_out_of = pres_max_grade_span.string 
 pres_max_grade = pres_max_grade_out_of.strip('/')
-print(pres_grade) 
-print(pres_max_grade) 
 pres_calculated_grade= float(pres_grade)/float(pres_max_grade) * 100 
-#pres_calculated_grade_rounded=round(pres_calculated_grade, 2) 
-print(f'Presentation grade (%): {pres_calculated_grade:.2f}')
+pres_weighted_grade=calc_weight_grade(pres_calculated_grade, 15.0)
+add_to_dict('Presentation',pres_calculated_grade, pres_weighted_grade)
+course_grade+=pres_weighted_grade
+
+#Add VRETTA assignment grade to course grade
+vretta_grade=100.0
+vretta_weighted_grade=15.0
+add_to_dict('VRETTA', vretta_grade, vretta_weighted_grade)
+course_grade+=vretta_weighted_grade
 
 
+#Print out grades into a table
+headers= ['Assignment', 'Grade(%)', 'Weighted Grade(%)']
+print(tabulate([[dict_key,] + grade for dict_key, grade in APS_dict.items()], headers=headers, tablefmt='fancy_grid')) 
+# tabulate method accepts a list of lists as the argument. each list is a row in the table
+# dictionary's .items method iterates over each key + value pair => Example: WS1 ['grade', 'weighted grade']
+# Need to flatten dictionary items to accommodate desired table formatting (above, we're concatenating the key in a list with its associated grade (value)) https://stackoverflow.com/questions/42235918/python-tabulate-dictionary-containing-two-values-per-key
 
+print(f'COURSE GRADE (%): {course_grade}')
