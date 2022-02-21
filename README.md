@@ -1,2 +1,2 @@
 # automating school grade calculations
- This is a program that utilizes Selenium, Chrome driver, and Python to keep track of and calculate my grades for each of my courses.
+ This is a Python script that utilizes Selenium and BeautifulSoup to dynamically parse my school's webpage for each assignment grade within a course and calculates my overall course grade.
