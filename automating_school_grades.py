@@ -201,3 +201,15 @@ for item in assignments.items():
         IPC144.add_grade(key, calculated_grade, weighted_grade)
         IPC144.add_to_overall_grade(weighted_grade)
         numb += 1
+
+# SUMMARY: Print out tables that represent each course and their assignment/grades
+    # tabulate method accepts a list of lists as its argument wherein each nested list becomes a row in the table
+    # dictionary .items method iterates over each key - value, value pair => returns 'key' : [value, value]
+    # dictionary items to accomodate desired table formatting by concatenating the key in a list with its associated value (grade)) https://stackoverflow.com/questions/42235918/python-tabulate-dictionary-containing-two-values-per-key
+    # output of table: ['WS1', 'grade', 'weight_grade']
+for course in course_list:
+    print(f'COURSE: {course.name}')
+    headers = ['Assignment', 'Grade(%)', 'Weighted Grade(%)']
+    table = [[key] + grade for key, grade in course.dict.items()]
+    print(tabulate(table, headers=headers, tablefmt='fancy_grid'))
+    print(f'OVERALL {course.name} GRADE (%): {course.overall_grade}\n\n')
