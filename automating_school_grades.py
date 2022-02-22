@@ -31,8 +31,7 @@ class Course:
         self.overall_grade = round(overall_grade, 2)
 
     def add_grade(self, key, grade, wgrade):
-        if key not in self.dict:
-            self.dict[key] = [round(grade, 2), round(wgrade, 2)]
+        self.dict[key] = [round(grade, 2), round(wgrade, 2)]
 
     def add_to_overall_grade(self, grade):
         self.overall_grade += grade
