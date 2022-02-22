@@ -1,12 +1,13 @@
 # Dynamic scraping: Selenium is used to automate web browser interaction (logging in + webpage navigation) and Beautiful Soup is used to scrape grades
 
+import re
+
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
-import re
+from selenium.webdriver.support.ui import WebDriverWait
 from tabulate import tabulate
 
 
