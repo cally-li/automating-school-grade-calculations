@@ -209,10 +209,10 @@ for item in assignments.items():
         numb += 1
 
 # Add workshop grades
-# Workshop 1, 2, 3 (worth 1%)
-divID = [3068960, 3068962, 3068964]
+# list of div tag IDs housing each workshop grade
+divID = [3068960, 3068962, 3068964, 3068966, 3068968]
 numb = 1
-for item in divID:
+for index, item in enumerate(divID):
     gradep1 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
         'span', class_='grade').string
     item += 1
@@ -220,23 +220,10 @@ for item in divID:
         'span', class_='grade').string
     wsgrade = (((float(gradep1))+(float(gradep2)))/10) * 100
     key = f'Workshop-#{numb}'
-    weighted_grade = calc_weight_grade(wsgrade, workshop_list[0][1])
-    IPC144.add_grade(key, wsgrade, weighted_grade)
-    IPC144.add_to_overall_grade(weighted_grade)
-    numb += 1
-
-# Workshop 4,5 (worth 2%)
-divID = [3068966, 3068968]
-numb = 4
-for item in divID:
-    gradep1 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
-        'span', class_='grade').string
-    item += 1
-    gradep2 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
-        'span', class_='grade').string
-    wsgrade = (((float(gradep1))+(float(gradep2)))/10) * 100
-    key = f'Workshop-#{numb}'
-    weighted_grade = calc_weight_grade(wsgrade, workshop_list[1][1])
+    if index in range(0, 3):  # Workshop 1, 2, 3 (worth 1% each)
+        weighted_grade = calc_weight_grade(wsgrade, workshop_list[0][1])
+    elif index in range(3, 5):  # Workshop 4, 5 (worth 2% each)
+        weighted_grade = calc_weight_grade(wsgrade, workshop_list[1][1])
     IPC144.add_grade(key, wsgrade, weighted_grade)
     IPC144.add_to_overall_grade(weighted_grade)
     numb += 1
