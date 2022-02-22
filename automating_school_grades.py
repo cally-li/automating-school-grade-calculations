@@ -176,17 +176,23 @@ wait.until(EC.element_to_be_clickable(
     (By.XPATH, '/html/body/div[2]/div[3]/nav/div/div[2]/div/div[2]/ul/li[4]/a')))
 driver.find_element(
     By.XPATH, '/html/body/div[2]/div[3]/nav/div/div[2]/div/div[2]/ul/li[4]/a').click()
+wait.until(EC.presence_of_element_located(
+    (By.XPATH, '/html/body/div[2]/div[3]/div/div/div/div/div[2]/div[1]/ul/li[2]/a')))
+
+
 html = driver.page_source
 soup = BeautifulSoup(html, 'html.parser')
 
 assignments = {'reading-exercise': 1.1}
-single_assignments = []
+workshop_list = [('Workshops123', 1.0),
+                 ('Workshops45', 2.0), ('Workshop6', 3.0)]  # workshops are weighted differently
 
 for item in assignments.items():
     numb = 1
     all_list = soup.find_all(text=re.compile(item[0]))
-    text_list = all_list[1:7]
-    for text in reversed(text_list):
+    text_list = all_list[0:8]
+    # for text in reversed(text_list):
+    for text in text_list:
         try:
             cell_parent = text.parent.parent.parent
             grade = cell_parent.find('div', class_='cell grade').find(
@@ -201,6 +207,43 @@ for item in assignments.items():
         IPC144.add_grade(key, calculated_grade, weighted_grade)
         IPC144.add_to_overall_grade(weighted_grade)
         numb += 1
+
+# Add workshop grades
+# Workshop 1, 2, 3 (worth 1%)
+divID = [3068960, 3068962, 3068964]
+numb = 1
+for item in divID:
+    gradep1 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
+        'span', class_='grade').string
+    print(gradep1)
+    item += 1
+    gradep2 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
+        'span', class_='grade').string
+    print(gradep2)
+    wsgrade = (((float(gradep1))+(float(gradep2)))/10) * 100
+    key = f'Workshop-#{numb}'
+    weighted_grade = calc_weight_grade(wsgrade, workshop_list[0][1])
+    IPC144.add_grade(key, wsgrade, weighted_grade)
+    IPC144.add_to_overall_grade(weighted_grade)
+    numb += 1
+
+# Workshop 4,5 (worth 2%)
+divID = [3068966, 3068968]
+numb = 4
+for item in divID:
+    gradep1 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
+        'span', class_='grade').string
+    print(gradep1)
+    item += 1
+    gradep2 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
+        'span', class_='grade').string
+    print(gradep2)
+    wsgrade = (((float(gradep1))+(float(gradep2)))/10) * 100
+    key = f'Workshop-#{numb}'
+    weighted_grade = calc_weight_grade(wsgrade, workshop_list[1][1])
+    IPC144.add_grade(key, wsgrade, weighted_grade)
+    IPC144.add_to_overall_grade(weighted_grade)
+    numb += 1
 
 # SUMMARY: Print out tables that represent each course and their assignment/grades
     # tabulate method accepts a list of lists as its argument wherein each nested list becomes a row in the table
