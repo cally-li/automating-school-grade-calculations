@@ -215,11 +215,9 @@ numb = 1
 for item in divID:
     gradep1 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
         'span', class_='grade').string
-    print(gradep1)
     item += 1
     gradep2 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
         'span', class_='grade').string
-    print(gradep2)
     wsgrade = (((float(gradep1))+(float(gradep2)))/10) * 100
     key = f'Workshop-#{numb}'
     weighted_grade = calc_weight_grade(wsgrade, workshop_list[0][1])
@@ -233,11 +231,9 @@ numb = 4
 for item in divID:
     gradep1 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
         'span', class_='grade').string
-    print(gradep1)
     item += 1
     gradep2 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
         'span', class_='grade').string
-    print(gradep2)
     wsgrade = (((float(gradep1))+(float(gradep2)))/10) * 100
     key = f'Workshop-#{numb}'
     weighted_grade = calc_weight_grade(wsgrade, workshop_list[1][1])
