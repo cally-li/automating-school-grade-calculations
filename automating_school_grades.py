@@ -36,6 +36,9 @@ class Course:
     def add_to_overall_grade(self, grade):
         self.overall_grade += grade
 
+    def __repr__(self):  # define how a course object is represented
+        return f'Course:{self.name}\nAssignments:{self.dict}'
+
 
 # define chromedriver path and object for webdriver
 s = Service('/Users/callyli/Documents/chromedriver')
