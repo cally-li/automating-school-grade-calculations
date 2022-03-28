@@ -1,5 +1,4 @@
 # Dynamic scraping: Selenium is used to automate web browser interaction (logging in + webpage navigation) and Beautiful Soup is used to scrape grades
-
 import re
 import os
 from bs4 import BeautifulSoup
@@ -108,8 +107,6 @@ html = driver.page_source
 soup = BeautifulSoup(html, 'html.parser')
 
 # List of course assignments and corresponding weight(%) per assignment in the course
-# assignments = {'Workshops': 4.4, 'Quizzes': 10.0}
-# single_assignments = [['Presentation', 15.0], ['VRETTA', 15.0]]
 assignments = [['Workshops', 4.4], ['Quizzes', 10.0],
                ['Presentation', 15.0], ['VRETTA', 15.0]]
 
@@ -120,10 +117,11 @@ assignments = [['Workshops', 4.4], ['Quizzes', 10.0],
 # 4) cast string values (assignment grade and max grade) to float values and calculate grade as percentage
 # 5) add calculated assignment grade to course dictionary. add calculated weighted grade to overall course grade
 
-for assignment in assignments[:3]:
+#Calculate workshop and quiz grades
+for assignment in assignments[:2]:
     numb = 1
     all_list = soup.find_all(text=re.compile(assignment[0]))
-    text_list = all_list[1: 7]
+    text_list = all_list[1: 10]
     for text in reversed(text_list):
         try:
             cell_parent = text.parent.parent.parent
@@ -147,18 +145,23 @@ pres_max_grade = soup.find('div', id='3046743').find('div', class_='cell grade')
     'span', class_='pointsPossible clearfloats').string.strip('/')
 pres_calculated_grade = float(pres_grade)/float(pres_max_grade) * 100
 pres_weighted_grade = calc_weight_grade(
-    pres_calculated_grade, assignments[0][1])
-APS145.add_grade(assignments[0][0],
+    pres_calculated_grade, assignments[2][1])
+APS145.add_grade(assignments[2][0],
                  pres_calculated_grade, pres_weighted_grade)
 APS145.add_to_overall_grade(pres_weighted_grade)
 
 
 # Calculate VRETTA assignment grade
-vretta_grade = 100.0
-weighted_grade = calc_weight_grade(vretta_grade, assignments[1][1])
-APS145.add_grade(assignments[1][0],
-                 vretta_grade, weighted_grade)
-APS145.add_to_overall_grade(weighted_grade)
+vretta_grade = soup.find('div', id='3046746').find(
+    'div', class_='cell grade').find('span', class_='grade').string
+vretta_max_grade = soup.find('div', id='3046746').find('div', class_='cell grade').find(
+    'span', class_='pointsPossible clearfloats').string.strip('/')
+vretta_calculated_grade = float(vretta_grade)/float(vretta_max_grade) * 100
+vretta_weighted_grade = calc_weight_grade(
+    vretta_calculated_grade, assignments[3][1])
+APS145.add_grade(assignments[3][0],
+                 vretta_calculated_grade, vretta_weighted_grade)
+APS145.add_to_overall_grade(vretta_weighted_grade)
 
 
 # COURSE 2
@@ -179,7 +182,7 @@ html = driver.page_source
 soup = BeautifulSoup(html, 'html.parser')
 
 assignments = [['reading-exercise', 1.1], ['Workshops123', 1.0],
-               ['Workshops45', 2.0], ['Workshop6', 3.0], ['Workshop7', 4.0], ['Workshop8', 6.0]]  # workshops are weighted differently
+               ['Workshops45', 2.0], ['Workshop6', 3.0], ['Workshop7', 4.0], ['Workshop8', 6.0], ['Midterm', 20.0]]  # workshops are weighted differently
 
 numb = 1
 for assignment in assignments[:1]:
@@ -204,7 +207,7 @@ for assignment in assignments[:1]:
 
 # Add workshop grades - 2 parts (2 grades per workshop)
 # list of div tag IDs housing each workshop grade
-divID = [3068960, 3068962, 3068964, 3068966, 3068968]
+divID = [3068960, 3068962, 3068964, 3068966, 3068968, 3068970, 3068984]
 numb = 1
 for index, item in enumerate(divID):
     gradep1 = soup.find('div', id=f'{item}').find('div', class_='cell grade').find(
@@ -218,6 +221,10 @@ for index, item in enumerate(divID):
         weighted_grade = calc_weight_grade(grade, 1.0)
     elif index in range(3, 5):  # Workshop 4, 5 (worth 2% each)
         weighted_grade = calc_weight_grade(grade, 2.0)
+    elif index == 5:  # Workshop 6 (worth 3%)
+        weighted_grade = calc_weight_grade(grade, 3.0)
+    elif index == 6:  # Workshop 67(worth 4%)
+        weighted_grade = calc_weight_grade(grade, 4.0)
     IPC144.add_grade(key, grade, weighted_grade)
     IPC144.add_to_overall_grade(weighted_grade)
     numb += 1
@@ -232,4 +239,4 @@ for course in course_list:
     headers = ['Assignment', 'Grade(%)', 'Weighted Grade(%)']
     table = [[key] + grade for key, grade in course.dict.items()]
     print(tabulate(table, headers=headers, tablefmt='fancy_grid'))
-    print(f'OVERALL {course.name} GRADE (%): {course.overall_grade}\n\n')
+    print(f'CURRENT {course.name} GRADE (%): {course.overall_grade}\n\n')
